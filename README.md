@@ -6,17 +6,19 @@
 
 ---
 
-BlurNow is a tiny macOS privacy app. Launch it and every display is covered with a frosted blur, hiding the Dock, menu bar and cursor. Press any key, move or tap the trackpad, scroll, or click, and it fades away.
+BlurNow is a tiny macOS privacy app. Press <kbd>⌃</kbd><kbd>⌥</kbd><kbd>⌘</kbd><kbd>B</kbd> anywhere and every display is covered, hiding the Dock, menu bar and cursor. Press any key, move or tap the trackpad, scroll, or click, and it fades away.
 
 Think of it as an instant screen saver for when someone walks up behind you.
 
 ## Features
 
-- **One click** — put it in the Dock and click to blur.
-- **Any input exits** — keyboard, mouse, trackpad, scroll, gestures.
+- **One shortcut** — press <kbd>⌃</kbd><kbd>⌥</kbd><kbd>⌘</kbd><kbd>B</kbd> from any app. Press it again, or touch anything, to bring the screen back.
+- **Three cover modes** — frosted **blur** with adjustable strength, your **wallpaper** (looks like an empty desktop), or any **image** you pick.
+- **Settings window** — click the app icon to change the shortcut, cover mode, blur style and strength, and behavior.
+- **Always ready** — runs in the background with no Dock or menu bar icon, and starts at login.
 - **All displays** — covers every connected screen.
-- **No permissions** — uses the system `NSVisualEffectView` blur, so no Screen Recording or Accessibility access is needed.
-- **Tiny** — a single Swift file, no dependencies, no Xcode project.
+- **No permissions** — uses the system `NSVisualEffectView` blur and a Carbon global hotkey, so no Screen Recording or Accessibility access is needed.
+- **Scriptable** — `blurnow://` URLs for Raycast, Alfred, Shortcuts or the terminal.
 
 ## Download
 
@@ -43,20 +45,37 @@ cp -R BlurNow.app /Applications/
 
 Then drag `BlurNow` from `/Applications` into your Dock, or launch it from Spotlight.
 
-## Customize
+## Settings
 
-Edit the constants at the top of [`main.swift`](main.swift), then run `./build.sh` again.
+Click BlurNow in the Dock, Launchpad or Spotlight to open its settings.
 
 | Setting | Default | What it does |
 | --- | --- | --- |
-| `gracePeriod` | `0.8` s | Input is ignored for this long after launch, so the click that opened the app doesn't close it. |
-| `mouseThreshold` | `6` pt | How far the cursor must move before the blur exits. |
-| `blur.material` | `.fullScreenUI` | Blur style. Try `.hudWindow` for a darker, stronger blur. |
+| Shortcut | <kbd>⌃</kbd><kbd>⌥</kbd><kbd>⌘</kbd><kbd>B</kbd> | Click it, then type a new shortcut. It needs at least one of ⌘, ⌥ or ⌃. <kbd>Esc</kbd> cancels. |
+| Show | Blur | **Blur**, **Wallpaper** (your current desktop picture) or **Image** (a file you choose). |
+| Style | Auto | Blur tint: follows the system appearance, or force Light / Dark. |
+| Strength | Lowest | Adds an opaque layer on top of the blur. Higher hides more. |
+| Hide cursor | On | Hide the pointer while covered. |
+| Dismiss when the mouse moves | On | Turn off to exit only on keys, clicks and scrolls. |
+| Launch at login | On | Start silently in the background after login. |
+
+**Preview** shows the cover right away. **Quit BlurNow** stops the background app.
+
+## URL scheme
+
+```bash
+open blurnow://blur       # cover the screen
+open blurnow://unblur     # bring it back
+open blurnow://toggle
+open blurnow://settings
+```
 
 ## How it works
 
 - One borderless window per screen at `.screenSaver` level, each containing an `NSVisualEffectView` with `.behindWindow` blending. The WindowServer does the blur, so the app never reads screen pixels.
-- `LSUIElement` keeps it out of the Dock's running-apps area and the app switcher.
+- `LSUIElement` keeps it out of the Dock and the app switcher; it only shows up while the settings window is open.
+- The shortcut is registered with Carbon `RegisterEventHotKey`, which needs no Accessibility permission.
+- Launch at login uses `SMAppService.mainApp`. When launched as a login item, BlurNow starts silently without blurring.
 - Exit is triggered by local and global `NSEvent` monitors, a 50 ms cursor-position poll (robust across multiple displays), and losing focus.
 
 ## Limitations

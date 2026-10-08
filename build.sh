@@ -18,10 +18,14 @@ cat > $APP/Contents/Info.plist <<PLIST
   <key>CFBundleIdentifier</key><string>local.blurnow</string>
   <key>CFBundleExecutable</key><string>BlurNow</string>
   <key>CFBundlePackageType</key><string>APPL</string>
-  <key>CFBundleVersion</key><string>1</string>
-  <key>CFBundleShortVersionString</key><string>1.0</string>
+  <key>CFBundleVersion</key><string>2</string>
+  <key>CFBundleShortVersionString</key><string>1.1.0</string>
   <key>LSMinimumSystemVersion</key><string>13.0</string>
   <key>CFBundleIconFile</key><string>AppIcon</string>
+  <key>CFBundleURLTypes</key><array><dict>
+    <key>CFBundleURLName</key><string>local.blurnow</string>
+    <key>CFBundleURLSchemes</key><array><string>blurnow</string></array>
+  </dict></array>
   <key>LSUIElement</key><true/>
 </dict></plist>
 PLIST
