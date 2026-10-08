@@ -18,7 +18,19 @@ Think of it as an instant screen saver for when someone walks up behind you.
 - **No permissions** — uses the system `NSVisualEffectView` blur, so no Screen Recording or Accessibility access is needed.
 - **Tiny** — a single Swift file, no dependencies, no Xcode project.
 
-## Install
+## Download
+
+1. Download `BlurNow.zip` from the [latest release](https://github.com/YanjieZe/BlurNow/releases/latest) and unzip it.
+2. Move `BlurNow.app` to `/Applications`.
+3. The first time, **right-click → Open** (the app is ad-hoc signed, not notarized, so Gatekeeper asks once).
+
+If macOS says the app is damaged, clear the quarantine flag:
+
+```bash
+xattr -dr com.apple.quarantine /Applications/BlurNow.app
+```
+
+## Build from source
 
 Requires macOS 13+ and the Xcode Command Line Tools (`xcode-select --install`).
 
