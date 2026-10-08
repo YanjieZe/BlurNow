@@ -13,7 +13,7 @@ Think of it as an instant screen saver for when someone walks up behind you.
 ## Features
 
 - **One shortcut** — press <kbd>⌃</kbd><kbd>⌥</kbd><kbd>⌘</kbd><kbd>B</kbd> from any app. Press it again, or touch anything, to bring the screen back.
-- **Three cover modes** — frosted **blur** with adjustable strength, your **wallpaper** (looks like an empty desktop), or any **image** you pick.
+- **Three cover modes** — frosted **blur** with adjustable radius and tint, your **wallpaper** (looks like an empty desktop), or any **image** you pick.
 - **Settings window** — click the app icon to change the shortcut, cover mode, blur style and strength, and behavior.
 - **Always ready** — runs in the background with no Dock or menu bar icon, and starts at login.
 - **All displays** — covers every connected screen.
@@ -54,7 +54,8 @@ Click BlurNow in the Dock, Launchpad or Spotlight to open its settings.
 | Shortcut | <kbd>⌃</kbd><kbd>⌥</kbd><kbd>⌘</kbd><kbd>B</kbd> | Click it, then type a new shortcut. It needs at least one of ⌘, ⌥ or ⌃. <kbd>Esc</kbd> cancels. |
 | Show | Blur | **Blur**, **Wallpaper** (your current desktop picture) or **Image** (a file you choose). |
 | Style | Auto | Blur tint: follows the system appearance, or force Light / Dark. |
-| Strength | Lowest | Adds an opaque layer on top of the blur. Higher hides more. |
+| Blur | More | Blur radius. Turn it down to keep layouts recognizable, up to hide everything. |
+| Tint | Clear | Adds an opaque layer on top of the blur. |
 | Hide cursor | On | Hide the pointer while covered. |
 | Dismiss when the mouse moves | On | Turn off to exit only on keys, clicks and scrolls. |
 | Launch at login | On | Start silently in the background after login. |
@@ -73,6 +74,7 @@ open blurnow://settings
 ## How it works
 
 - One borderless window per screen at `.screenSaver` level, each containing an `NSVisualEffectView` with `.behindWindow` blending. The WindowServer does the blur, so the app never reads screen pixels.
+- The blur radius is set through the private `filters.gaussianBlur.inputRadius` key path of the view's `CABackdropLayer`. If a future macOS changes that, BlurNow falls back to the system default radius.
 - `LSUIElement` keeps it out of the Dock and the app switcher; it only shows up while the settings window is open.
 - The shortcut is registered with Carbon `RegisterEventHotKey`, which needs no Accessibility permission.
 - Launch at login uses `SMAppService.mainApp`. When launched as a login item, BlurNow starts silently without blurring.

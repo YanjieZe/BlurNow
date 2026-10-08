@@ -37,7 +37,8 @@ enum Pref {
     static let hotKeyDisplay = "hotKeyDisplay"
     static let mode = "mode"
     static let style = "style"
-    static let strength = "strength"                 // 0...0.95，叠加层不透明度
+    static let blurRadius = "blurRadius"             // 模糊半径，系统默认 30
+    static let strength = "strength"                 // 0...0.95，叠加层（Tint）不透明度
     static let imagePath = "imagePath"
     static let hideCursor = "hideCursor"
     static let exitOnMouseMove = "exitOnMouseMove"
@@ -52,6 +53,7 @@ enum Pref {
             hotKeyDisplay: "⌃⌥⌘B",
             mode: CoverMode.blur.rawValue,
             style: BlurStyle.auto.rawValue,
+            blurRadius: 30.0,
             strength: 0.0,
             imagePath: "",
             hideCursor: true,
@@ -218,7 +220,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
             windows.forEach { $0.animator().alphaValue = 1 }
         }
         // 轮询鼠标位置：不依赖事件分发，多屏时也可靠
+        // 同时检查模糊半径：系统在激活 / 切换外观时会把 filter 重置回默认值
+        let radius = Pref.d.double(forKey: Pref.blurRadius)
+        applyBlurRadius(radius)
         pollTimer = Timer.scheduledTimer(withTimeInterval: 0.05, repeats: true) { [weak self] _ in
+            self?.applyBlurRadius(radius)
             self?.checkMouse()
         }
     }
@@ -287,6 +293,22 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
             .withAlphaComponent(Pref.d.double(forKey: Pref.strength)).cgColor
         blur.addSubview(overlay)
         return blur
+    }
+
+    /// NSVisualEffectView 没有公开的模糊半径 API。这里改它内部 CABackdropLayer 的
+    /// gaussianBlur filter；找不到时保持系统默认半径。
+    private func applyBlurRadius(_ radius: Double) {
+        windows.forEach { setBlurRadius($0.contentView?.layer, radius) }
+    }
+
+    private func setBlurRadius(_ layer: CALayer?, _ radius: Double) {
+        guard let layer else { return }
+        let keyPath = "filters.gaussianBlur.inputRadius"
+        if NSStringFromClass(type(of: layer)).contains("Backdrop"),
+           let current = layer.value(forKeyPath: keyPath) as? Double, current != radius {
+            layer.setValue(radius, forKeyPath: keyPath)
+        }
+        layer.sublayers?.forEach { setBlurRadius($0, radius) }
     }
 
     // MARK: Input
@@ -434,6 +456,7 @@ struct HotKeyRecorder: View {
 struct SettingsView: View {
     @AppStorage(Pref.mode) private var mode = CoverMode.blur.rawValue
     @AppStorage(Pref.style) private var style = BlurStyle.auto.rawValue
+    @AppStorage(Pref.blurRadius) private var blurRadius = 30.0
     @AppStorage(Pref.strength) private var strength = 0.0
     @AppStorage(Pref.imagePath) private var imagePath = ""
     @AppStorage(Pref.hideCursor) private var hideCursor = true
@@ -460,13 +483,22 @@ struct SettingsView: View {
                     Picker("Style", selection: $style) {
                         ForEach(BlurStyle.allCases) { Text($0.title).tag($0.rawValue) }
                     }
-                    LabeledContent("Strength") {
+                    LabeledContent("Blur") {
+                        Slider(value: $blurRadius, in: 1...40) {
+                            EmptyView()
+                        } minimumValueLabel: {
+                            Text("Less").font(.caption)
+                        } maximumValueLabel: {
+                            Text("More").font(.caption)
+                        }
+                    }
+                    LabeledContent("Tint") {
                         Slider(value: $strength, in: 0...0.95) {
                             EmptyView()
                         } minimumValueLabel: {
-                            Image(systemName: "circle.dotted")
+                            Text("Clear").font(.caption)
                         } maximumValueLabel: {
-                            Image(systemName: "circle.fill")
+                            Text("Solid").font(.caption)
                         }
                     }
                 case .wallpaper:
@@ -507,7 +539,7 @@ struct SettingsView: View {
             }
         }
         .formStyle(.grouped)
-        .frame(width: 460, height: 500)
+        .frame(width: 460, height: 540)
     }
 
     private func chooseImage() {
